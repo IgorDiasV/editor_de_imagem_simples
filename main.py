@@ -14,22 +14,21 @@ class EditImage():
         self.end_y = None
         self.is_selecting = False
         self.regiao_selecionada =False
+        self.imagem_original = None
        
     def abrir_imagem(self):
   
 
         self.file_path = filedialog.askopenfilename()
         self.imagem = cv2.imread(self.file_path)
+        self.imagem_original = self.imagem.copy()
         imagem_rgb = cv2.cvtColor(self.imagem, cv2.COLOR_BGR2RGB)
         imagem_tk = ImageTk.PhotoImage(Image.fromarray(imagem_rgb))
-
         label_imagem.configure(image=imagem_tk)
         label_imagem.image = imagem_tk
 
 
-    def aplicar_filtro(self, filtro):
-        
-
+    def aplicar_filtro(self, filtro):      
 
         mask = np.array(filtro).reshape(3, 3)
 
@@ -47,11 +46,9 @@ class EditImage():
        
         else:
             frameFiltered = cv2.filter2D(self.imagem.copy(), -1, mask, anchor=(1, 1), delta=0, borderType=cv2.BORDER_DEFAULT)
-        # frameFiltered = cv2.convertScaleAbs(frameFiltered)
 
         result = np.uint8(frameFiltered)
-        # cv2.imshow('blabla', result)
-        # cv2.waitKey()
+        self.imagem = result.copy()
         result = cv2.cvtColor(result, cv2.COLOR_BGR2RGB)
         imagem_tk = ImageTk.PhotoImage(Image.fromarray(result))
         
@@ -85,6 +82,7 @@ class EditImage():
             self.end_y = event.y
             imagem_com_retangulo = self.imagem.copy()
             cv2.rectangle(imagem_com_retangulo, (self.start_x, self.start_y), (self.end_x, self.end_y), (255, 0, 0), 2)
+            
             imagem_com_retangulo_rgb = cv2.cvtColor(imagem_com_retangulo, cv2.COLOR_BGR2RGB)
             imagem_tk = ImageTk.PhotoImage(Image.fromarray(imagem_com_retangulo_rgb))
             label_imagem.configure(image=imagem_tk)
@@ -107,6 +105,13 @@ class EditImage():
             label_imagem.image = imagem_tk
             self.regiao_selecionada = True 
 
+    def restaurar_imagem(self):
+        self.imagem = self.imagem_original.copy()
+        self.imagem = cv2.cvtColor(self.imagem, cv2.COLOR_BGR2RGB)
+        imagem_tk = ImageTk.PhotoImage(Image.fromarray( self.imagem))
+        label_imagem.configure(image=imagem_tk)
+        label_imagem.image = imagem_tk
+
     def iniciar_selecao(self):
         janela.bind("<Button-1>", self.on_mouse_down)
         janela.bind("<B1-Motion>", self.on_mouse_move)
@@ -128,6 +133,7 @@ botao_vertical = tk.Button(frame_botoes, text="Filtro Vertical", command=edit_im
 botao_laplaciano = tk.Button(frame_botoes, text="Filtro Laplaciano", command=edit_image.laplacian)
 botao_boost = tk.Button(frame_botoes, text="Filtro Boost", command=edit_image.boost)
 botao_selecao = tk.Button(frame_botoes, text="Selecionar Região", command=edit_image.iniciar_selecao)
+botao_restaurar = tk.Button(frame_botoes, text="Imagem Original", command=edit_image.restaurar_imagem)
 
 botao_abrir_imagem.grid(row=0, column=0)
 botao_media.grid(row=0, column=1)
@@ -137,6 +143,7 @@ botao_vertical.grid(row=0, column=4)
 botao_laplaciano.grid(row=0, column=5)
 botao_boost.grid(row=0, column=6)
 botao_selecao.grid(row=0, column=7)
+botao_restaurar.grid(row=0, column=8)
 
 frame_imagem = tk.Frame(janela)
 frame_imagem.pack()
