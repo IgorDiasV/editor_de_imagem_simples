@@ -15,6 +15,7 @@ class EditImage():
         self.is_selecting = False
         self.regiao_selecionada =False
         self.imagem_original = None
+        self.imagem_anterior = None
        
     def abrir_imagem(self):
   
@@ -22,6 +23,7 @@ class EditImage():
         self.file_path = filedialog.askopenfilename()
         self.imagem = cv2.imread(self.file_path)
         self.imagem_original = self.imagem.copy()
+        self.imagem_anterior = self.imagem.copy()
         imagem_rgb = cv2.cvtColor(self.imagem, cv2.COLOR_BGR2RGB)
         imagem_tk = ImageTk.PhotoImage(Image.fromarray(imagem_rgb))
         label_imagem.configure(image=imagem_tk)
@@ -31,7 +33,7 @@ class EditImage():
     def aplicar_filtro(self, filtro):      
 
         mask = np.array(filtro).reshape(3, 3)
-
+        self.imagem_anterior = self.imagem.copy()
         if self.regiao_selecionada:
             regiao_selecionada = np.zeros_like(self.imagem[:, :, 0])
             regiao_selecionada[self.start_y:self.end_y , self.start_x: self.end_x] = 255
@@ -107,8 +109,14 @@ class EditImage():
 
     def restaurar_imagem(self):
         self.imagem = self.imagem_original.copy()
-        self.imagem = cv2.cvtColor(self.imagem, cv2.COLOR_BGR2RGB)
-        imagem_tk = ImageTk.PhotoImage(Image.fromarray( self.imagem))
+        resultado = cv2.cvtColor(self.imagem, cv2.COLOR_BGR2RGB)
+        imagem_tk = ImageTk.PhotoImage(Image.fromarray( resultado))
+        label_imagem.configure(image=imagem_tk)
+        label_imagem.image = imagem_tk
+    def desfazer_alteracao(self):
+        self.imagem = self.imagem_anterior.copy()
+        resultado = cv2.cvtColor(self.imagem, cv2.COLOR_BGR2RGB)
+        imagem_tk = ImageTk.PhotoImage(Image.fromarray( resultado))
         label_imagem.configure(image=imagem_tk)
         label_imagem.image = imagem_tk
 
@@ -134,6 +142,7 @@ botao_laplaciano = tk.Button(frame_botoes, text="Filtro Laplaciano", command=edi
 botao_boost = tk.Button(frame_botoes, text="Filtro Boost", command=edit_image.boost)
 botao_selecao = tk.Button(frame_botoes, text="Selecionar Região", command=edit_image.iniciar_selecao)
 botao_restaurar = tk.Button(frame_botoes, text="Imagem Original", command=edit_image.restaurar_imagem)
+botao_desfazer = tk.Button(frame_botoes, text="Desfazer Alteração", command=edit_image.desfazer_alteracao)
 
 botao_abrir_imagem.grid(row=0, column=0)
 botao_media.grid(row=0, column=1)
@@ -144,6 +153,7 @@ botao_laplaciano.grid(row=0, column=5)
 botao_boost.grid(row=0, column=6)
 botao_selecao.grid(row=0, column=7)
 botao_restaurar.grid(row=0, column=8)
+botao_desfazer.grid(row=0, column=9)
 
 frame_imagem = tk.Frame(janela)
 frame_imagem.pack()
