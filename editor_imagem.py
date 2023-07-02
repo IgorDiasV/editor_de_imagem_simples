@@ -1,5 +1,4 @@
 import cv2
-import tkinter as tk
 from tkinter import filedialog
 from PIL import ImageTk, Image
 import numpy as np
@@ -15,9 +14,11 @@ class EditImage():
         self.is_selecting = False
         self.regiao_selecionada =False
         self.imagem_original = None
-        self.imagem_anterior = None
+        # self.imagem_anterior = None
         self.label_imagem = label_imagem
         self.janela = janela
+        self.hist_alteracao =  [None for i in range(5)]
+        self.post_atual = 0
        
     def abrir_imagem(self):
   
@@ -25,7 +26,8 @@ class EditImage():
         self.file_path = filedialog.askopenfilename()
         self.imagem = cv2.imread(self.file_path)
         self.imagem_original = self.imagem.copy()
-        self.imagem_anterior = self.imagem.copy()
+        self.hist_alteracao[self.post_atual] = self.imagem.copy()
+        self.post_atual += 1
         imagem_rgb = cv2.cvtColor(self.imagem, cv2.COLOR_BGR2RGB)
         imagem_tk = ImageTk.PhotoImage(Image.fromarray(imagem_rgb))
         self.label_imagem.configure(image=imagem_tk)
@@ -35,7 +37,14 @@ class EditImage():
     def aplicar_filtro(self, filtro):      
 
         mask = np.array(filtro).reshape(3, 3)
-        self.imagem_anterior = self.imagem.copy()
+        
+        if self.post_atual == 5:
+            self.hist_alteracao.pop(0)
+            self.hist_alteracao.append(self.imagem.copy())
+        else:
+            self.hist_alteracao[self.post_atual] = self.imagem.copy()
+            self.post_atual += 1
+
         if self.regiao_selecionada:
             regiao_selecionada = np.zeros_like(self.imagem[:, :, 0])
             regiao_selecionada[self.start_y:self.end_y , self.start_x: self.end_x] = 255
@@ -117,11 +126,13 @@ class EditImage():
         self.label_imagem.image = imagem_tk
         
     def desfazer_alteracao(self):
-        self.imagem = self.imagem_anterior.copy()
-        resultado = cv2.cvtColor(self.imagem, cv2.COLOR_BGR2RGB)
-        imagem_tk = ImageTk.PhotoImage(Image.fromarray( resultado))
-        self.label_imagem.configure(image=imagem_tk)
-        self.label_imagem.image = imagem_tk
+        if(self.post_atual>0):
+            self.post_atual -= 1
+            self.imagem = self.hist_alteracao[self.post_atual].copy()
+            resultado = cv2.cvtColor(self.imagem, cv2.COLOR_BGR2RGB)
+            imagem_tk = ImageTk.PhotoImage(Image.fromarray( resultado))
+            self.label_imagem.configure(image=imagem_tk)
+            self.label_imagem.image = imagem_tk
 
     def iniciar_selecao(self):
         self.janela.bind("<Button-1>", self.on_mouse_down)
