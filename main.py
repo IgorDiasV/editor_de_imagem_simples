@@ -1,8 +1,4 @@
-import cv2
 import tkinter as tk
-from tkinter import filedialog
-from PIL import ImageTk, Image
-import numpy as np
 from editor_imagem import EditImage
 
 
