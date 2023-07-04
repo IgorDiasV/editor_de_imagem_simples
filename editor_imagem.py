@@ -2,7 +2,7 @@ import cv2
 from tkinter import filedialog
 from PIL import ImageTk, Image
 import numpy as np
-
+from tkinter import colorchooser
 
 class EditImage():
     def __init__(self, janela,label_imagem):
@@ -138,3 +138,33 @@ class EditImage():
         self.janela.bind("<Button-1>", self.on_mouse_down)
         self.janela.bind("<B1-Motion>", self.on_mouse_move)
         self.janela.bind("<ButtonRelease-1>", self.on_mouse_up)
+
+    
+    def regiao_clicada(self):
+        self.janela.bind("<Button-1>", self.detectar_cor)
+    def detectar_cor(self, event):
+        if event.widget == self.label_imagem:
+            pixel = self.imagem[event.y, event.x]
+            self.b = pixel[0]
+            self.g = pixel[1]
+            self.r = pixel[2]
+            print(pixel)
+    
+    def mudar_cor(self):
+        color = colorchooser.askcolor(title="Escolha uma cor")    
+        rgb = color[0]
+        r = rgb[0]
+        g = rgb[1]
+        b = rgb[2]
+        altura = np.shape(self.imagem)[0]
+        largura = np.shape(self.imagem)[1]
+        for i in range(altura):
+            for j in range(largura):
+                pixel = self.imagem[i, j]
+                if (pixel[0] >= (self.b - 10) and pixel[0] <= (self.b+10) )  and (pixel[1] >= (self.g - 10) and pixel[1] <= (self.g+10) ) and (pixel[2] >= (self.r - 10) and (pixel[2] <= (self.r+10)) ):
+                    self.imagem[i, j] = [b, g, r]
+
+        resultado = cv2.cvtColor(self.imagem, cv2.COLOR_BGR2RGB)
+        imagem_tk = ImageTk.PhotoImage(Image.fromarray( resultado))
+        self.label_imagem.configure(image=imagem_tk)
+        self.label_imagem.image = imagem_tk
