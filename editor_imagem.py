@@ -33,11 +33,7 @@ class EditImage():
         self.label_imagem.configure(image=imagem_tk)
         self.label_imagem.image = imagem_tk
 
-
-    def aplicar_filtro(self, filtro):      
-
-        mask = np.array(filtro).reshape(3, 3)
-        
+    def adicionar_imagem_atual_ao_historico(self):
         if self.post_atual == 5:
             self.hist_alteracao.pop(0)
             self.hist_alteracao.append(self.imagem.copy())
@@ -45,9 +41,15 @@ class EditImage():
             self.hist_alteracao[self.post_atual] = self.imagem.copy()
             self.post_atual += 1
 
+    def aplicar_filtro(self, filtro):      
+
+        mask = np.array(filtro).reshape(3, 3)
+        
+        self.adicionar_imagem_atual_ao_historico()
+
         if self.regiao_selecionada:
-            regiao_selecionada = np.zeros_like(self.imagem[:, :, 0])
-            regiao_selecionada[self.start_y:self.end_y , self.start_x: self.end_x] = 255
+            # regiao_selecionada = np.zeros_like(self.imagem[:, :, 0])
+            # regiao_selecionada[self.start_y:self.end_y , self.start_x: self.end_x] = 255
             imagem_aux =  self.imagem[self.start_y:self.end_y, self.start_x:self.end_x]
             frameFiltered = cv2.filter2D(imagem_aux, -1, mask, anchor=(1, 1), delta=0, borderType=cv2.BORDER_DEFAULT)
             imagem_aux = self.imagem.copy()
@@ -142,6 +144,7 @@ class EditImage():
     
     def regiao_clicada(self):
         self.janela.bind("<Button-1>", self.detectar_cor)
+
     def detectar_cor(self, event):
         if event.widget == self.label_imagem:
             pixel = self.imagem[event.y, event.x]
@@ -150,6 +153,10 @@ class EditImage():
             self.r = pixel[2]
             print(pixel)
     
+    def valor_dentro_do_intervalo(self, valor, valor_inicial, valor_final):
+        if (valor >= valor_inicial) and (valor <= valor_final):
+            return True
+        return False
     def mudar_cor(self):
         color = colorchooser.askcolor(title="Escolha uma cor")    
         rgb = color[0]
@@ -158,11 +165,31 @@ class EditImage():
         b = rgb[2]
         altura = np.shape(self.imagem)[0]
         largura = np.shape(self.imagem)[1]
-        for i in range(altura):
-            for j in range(largura):
-                pixel = self.imagem[i, j]
-                if (pixel[0] >= (self.b - 10) and pixel[0] <= (self.b+10) )  and (pixel[1] >= (self.g - 10) and pixel[1] <= (self.g+10) ) and (pixel[2] >= (self.r - 10) and (pixel[2] <= (self.r+10)) ):
-                    self.imagem[i, j] = [b, g, r]
+        self.adicionar_imagem_atual_ao_historico()
+        if self.regiao_selecionada:
+            self.regiao_selecionada = False 
+            imagem_aux =  self.imagem[self.start_y:self.end_y, self.start_x:self.end_x]
+            canais = cv2.split(imagem_aux)
+            
+            media_r = np.average(canais[2])
+            media_g = np.average(canais[1])
+            media_b = np.average(canais[0])
+
+            
+            variancia_r = np.var(canais[2])
+            variancia_g = np.var(canais[1])
+            variancia_b = np.var(canais[0])
+            for i in range(altura):
+                for j in range(largura):
+                    pixel = self.imagem[i, j]
+                    if self.valor_dentro_do_intervalo(pixel[0], media_b - variancia_b, media_b + variancia_b ) and self.valor_dentro_do_intervalo(pixel[1], media_g - variancia_g, media_g + variancia_g) and self.valor_dentro_do_intervalo(pixel[2], media_r - variancia_r, media_r + variancia_r):
+                        self.imagem[i, j] = [b, g, r]
+        else:
+            for i in range(altura):
+                for j in range(largura):
+                    pixel = self.imagem[i, j]
+                    if self.valor_dentro_do_intervalo(pixel[0], self.b - 10, self.b+10 ) and self.valor_dentro_do_intervalo(pixel[1], self.g - 10, self.g+10) and self.valor_dentro_do_intervalo(pixel[2], self.r - 10, self.r+10):
+                        self.imagem[i, j] = [b, g, r]
 
         resultado = cv2.cvtColor(self.imagem, cv2.COLOR_BGR2RGB)
         imagem_tk = ImageTk.PhotoImage(Image.fromarray( resultado))

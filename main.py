@@ -24,6 +24,7 @@ botao_selecao = tk.Button(frame_botoes, text="Selecionar Região", command=edit_
 botao_restaurar = tk.Button(frame_botoes, text="Imagem Original", command=edit_image.restaurar_imagem)
 botao_desfazer = tk.Button(frame_botoes, text="Desfazer Alteração", command=edit_image.desfazer_alteracao)
 botao_selecionar_cor = tk.Button(frame_botoes, text="Selecionar Cor", command=edit_image.regiao_clicada)
+botao_selecionar_regiao_cor = tk.Button(frame_botoes, text="Selecionar Região Cor", command=edit_image.iniciar_selecao)
 botao_detectar_cor = tk.Button(frame_botoes, text="Mudar Cor", command=edit_image.mudar_cor)
 
 botao_abrir_imagem.grid(row=0, column=0)
@@ -37,6 +38,7 @@ botao_selecao.grid(row=0, column=7)
 botao_restaurar.grid(row=0, column=8)
 botao_desfazer.grid(row=0, column=9)
 botao_selecionar_cor.grid(row=0, column=10)
+botao_selecionar_regiao_cor.grid(row=1, column=10)
 botao_detectar_cor.grid(row=0, column=11)
 
 
